@@ -1,0 +1,16 @@
+2025/12/22-18:28:30.578 4edc Reusing MANIFEST C:\Users\Moe\Documents\GitHub\FlightBox\radar_profile\IndexedDB\https_www.flightradar24.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/12/22-18:28:30.583 4edc Recovering log #17
+2025/12/22-18:28:30.583 4edc Reusing old log C:\Users\Moe\Documents\GitHub\FlightBox\radar_profile\IndexedDB\https_www.flightradar24.com_0.indexeddb.leveldb/000017.log 
+2025/12/22-18:28:30.583 4edc Delete type=2 #14
+2025/12/22-18:28:30.583 4edc Delete type=2 #15
+2025/12/22-18:28:30.662 4edc Level-0 table #23: started
+2025/12/22-18:28:30.669 4edc Level-0 table #23: 1321 bytes OK
+2025/12/22-18:28:30.670 4edc Delete type=0 #17
+2025/12/22-18:28:30.670 9628 Manual compaction at level-0 from '\x00\x0b\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0c\x00\x00\x00' @ 0 : 0; will stop at '\x00\x0b\x00\x00\x05' @ 186990 : 1
+2025/12/22-18:28:30.671 9628 Compacting 1@0 + 2@1 files
+2025/12/22-18:28:30.709 9628 Generated table #24@0: 102926 keys, 2255620 bytes
+2025/12/22-18:28:30.717 9628 Generated table #25@0: 12277 keys, 389590 bytes
+2025/12/22-18:28:30.717 9628 Compacted 1@0 + 2@1 files => 2645210 bytes
+2025/12/22-18:28:30.717 9628 compacted to: files[ 0 2 1 0 0 0 0 ]
+2025/12/22-18:28:30.717 9628 Delete type=2 #23
+2025/12/22-18:28:30.718 9628 Manual compaction at level-0 from '\x00\x0b\x00\x00\x05' @ 186990 : 1 .. '\x00\x0c\x00\x00\x00' @ 0 : 0; will stop at (end)
