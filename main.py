@@ -1,10 +1,20 @@
 import sys
 import os
+
+# 1. GPU FLAGS (Must be at the very top)
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
+    "--ignore-gpu-blocklist "
+    "--enable-gpu-rasterization "
+    "--enable-webgl "
+    "--enable-webgl2-compute-context "
+    "--use-gl=desktop"
+)
+
 from PyQt6.QtCore import QUrl, QTimer, QPoint, Qt
 from PyQt6.QtWidgets import QApplication, QMainWindow
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
-from PyQt6.QtTest import QTest # For simulating the click
+from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
+from PyQt6.QtTest import QTest
 
 # --- CONFIGURATION ---
 TARGET_URL = "https://www.flightradar24.com/45.32,-75.67/13"
@@ -15,14 +25,10 @@ CLEAN_CSS = """
     header, footer, .side-panel, .header-container, 
     #search-container, .gm-style-cc, .ads-container, 
     #premium-signup-banner, .map-controls, .ov-control,
-    #social-sharing, .filters-container, .tool-panel { 
-        display: none !important; 
-    }
+    #social-sharing, .filters-container, .tool-panel { display: none !important; }
     .fc-consent-root, .fc-dialog-container, .modal-backdrop, 
     .modal, #login-modal, .login-popup, #cookie-consent { 
-        display: none !important; 
-        visibility: hidden !important; 
-        pointer-events: none !important;
+        display: none !important; visibility: hidden !important; pointer-events: none !important;
     }
     body, html { overflow: hidden !important; margin: 0 !important; }
     #map-container, #map { 
@@ -30,46 +36,38 @@ CLEAN_CSS = """
         width: 480px !important; height: 320px !important; z-index: 9999 !important;
     }
 """
-
 class RadarWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setFixedSize(WINDOW_SIZE[0], WINDOW_SIZE[1])
         self.setWindowTitle("FlightBox Radar")
 
-        storage_path = os.path.join(os.path.dirname(__file__), "radar_profile")
-        self.profile = QWebEngineProfile("RadarProfile", self)
-        self.profile.setPersistentStoragePath(storage_path)
-        self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
-
-        self.browser = QWebEngineView(self)
-        self.page = QWebEnginePage(self.profile, self.browser)
-        self.browser.setPage(self.page)
+        # Initialize Browser FIRST
+        self.browser = QWebEngineView()
         
+        # Now apply settings directly to THIS browser instance
+        browser_settings = self.browser.settings()
+        browser_settings.setAttribute(QWebEngineSettings.WebAttribute.WebGLEnabled, True)
+        browser_settings.setAttribute(QWebEngineSettings.WebAttribute.Accelerated2dCanvasEnabled, True)
+
         self.browser.setZoomFactor(ZOOM_LEVEL)
         self.browser.setUrl(QUrl(TARGET_URL))
         
-        # A. Cleanup Timer: Runs every 2 seconds
         self.cleanup_timer = QTimer()
         self.cleanup_timer.timeout.connect(self.run_cleaner)
         self.cleanup_timer.start(2000) 
 
-        # B. Center Click Timer: Runs ONCE after 6 seconds
         self.click_timer = QTimer()
         self.click_timer.setSingleShot(True)
         self.click_timer.timeout.connect(self.click_center)
-        self.click_timer.start(6000) 
+        self.click_timer.start(8000) 
         
         self.setCentralWidget(self.browser)
 
     def click_center(self):
-        print("Performing auto-click to clear UI...")
-        # Calculate the middle of our 480x320 window
         center_x = int(WINDOW_SIZE[0] / 2)
         center_y = int(WINDOW_SIZE[1] / 2)
         center_point = QPoint(center_x, center_y)
-        
-        # Simulate a left-click on the browser widget
         QTest.mouseClick(self.browser.focusProxy(), Qt.MouseButton.LeftButton, pos=center_point)
 
     def run_cleaner(self):
@@ -78,9 +76,7 @@ class RadarWindow(QMainWindow):
                 var buttons = document.querySelectorAll('button');
                 buttons.forEach(btn => {{
                     var text = btn.innerText.toUpperCase();
-                    if (text.includes('AGREE') || text.includes('CONSENT') || text.includes('ACCEPT')) {{
-                        var scrollable = btn.closest('div');
-                        if (scrollable) {{ scrollable.scrollTop = scrollable.scrollHeight; }}
+                    if (text.includes('AGREE') || text.includes('CONSENT')) {{
                         btn.click();
                     }}
                 }});
@@ -98,11 +94,16 @@ class RadarWindow(QMainWindow):
         """
         self.browser.page().runJavaScript(script)
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
+
 if __name__ == "__main__":
+    # --- FIX: Set attribute BEFORE creating QApplication ---
+    os.environ["QT_XCB_GL_INTEGRATION"] = "xcb_egl"
     app = QApplication(sys.argv)
+    app.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
+    
     window = RadarWindow()
-    
-    # Use FullScreen for the Pi's LCD
-    window.showFullScreen() 
-    
+    window.show()
     sys.exit(app.exec())
