@@ -1,13 +1,23 @@
-import sys
 import os
+import sys
+
+# 1. GPU FLAGS
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
+    "--ignore-gpu-blocklist "
+    "--enable-gpu-rasterization "
+    "--enable-webgl "
+    "--enable-webgl2-compute-context "
+    "--use-gl=desktop"
+)
+
 from PyQt6.QtCore import QUrl, QTimer, QPoint, Qt
-from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QMessageBox
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
-from PyQt6.QtTest import QTest # For simulating the click
+from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
+from PyQt6.QtTest import QTest
 
 # --- CONFIGURATION ---
-TARGET_URL = "https://www.flightradar24.com/45.32,-75.67/13"
+TARGET_URL = "https://www.flightradar24.com/45.33,-75.67/13"
 WINDOW_SIZE = (480, 320)
 ZOOM_LEVEL = 0.8 
 
@@ -15,78 +25,100 @@ CLEAN_CSS = """
     header, footer, .side-panel, .header-container, 
     #search-container, .gm-style-cc, .ads-container, 
     #premium-signup-banner, .map-controls, .ov-control,
-    #social-sharing, .filters-container, .tool-panel { 
-        display: none !important; 
-    }
+    #social-sharing, .filters-container, .tool-panel { display: none !important; }
+    
     .fc-consent-root, .fc-dialog-container, .modal-backdrop, 
     .modal, #login-modal, .login-popup, #cookie-consent { 
-        display: none !important; 
-        visibility: hidden !important; 
-        pointer-events: none !important;
+        display: none !important; visibility: hidden !important; pointer-events: none !important;
     }
-    body, html { overflow: hidden !important; margin: 0 !important; }
+    
+    body, html { overflow: hidden !important; margin: 0 !important; background: black; }
+    
     #map-container, #map { 
         position: fixed !important; top: 0 !important; left: 0 !important;
         width: 480px !important; height: 320px !important; z-index: 9999 !important;
     }
 """
-
 class RadarWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setFixedSize(WINDOW_SIZE[0], WINDOW_SIZE[1])
-        self.setWindowTitle("FlightBox Radar")
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
-        storage_path = os.path.join(os.path.dirname(__file__), "radar_profile")
-        self.profile = QWebEngineProfile("RadarProfile", self)
-        self.profile.setPersistentStoragePath(storage_path)
-        self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
-
+        # --- BROWSER SETUP ---
         self.browser = QWebEngineView(self)
-        self.page = QWebEnginePage(self.profile, self.browser)
-        self.browser.setPage(self.page)
-        
+        browser_settings = self.browser.settings()
+        browser_settings.setAttribute(QWebEngineSettings.WebAttribute.WebGLEnabled, True)
         self.browser.setZoomFactor(ZOOM_LEVEL)
         self.browser.setUrl(QUrl(TARGET_URL))
-        
-        # A. Cleanup Timer: Runs every 2 seconds
+        self.setCentralWidget(self.browser)
+
+        # --- BUTTON OVERLAY ---
+        self.overlay = QWidget(self)
+        self.overlay.setGeometry(410, 10, 60, 90) 
+        layout = QVBoxLayout(self.overlay)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        # Style for buttons
+        btn_style = "background-color: rgba(40, 40, 40, 180); color: white; border: 1px solid white; border-radius: 8px; font-size: 14px; font-weight: bold;"
+
+        self.btn_close = QPushButton("X", self.overlay)
+        self.btn_close.setFixedSize(40, 40)
+        self.btn_close.setStyleSheet(btn_style.replace("white", "#ff4444"))
+        self.btn_close.clicked.connect(self.close)
+        layout.addWidget(self.btn_close)
+
+        self.btn_reboot = QPushButton("R", self.overlay)
+        self.btn_reboot.setFixedSize(40, 40)
+        self.btn_reboot.setStyleSheet(btn_style)
+        self.btn_reboot.clicked.connect(self.reboot_pi)
+        layout.addWidget(self.btn_reboot)
+
+        # Timers
         self.cleanup_timer = QTimer()
         self.cleanup_timer.timeout.connect(self.run_cleaner)
         self.cleanup_timer.start(2000) 
 
-        # B. Center Click Timer: Runs ONCE after 6 seconds
         self.click_timer = QTimer()
         self.click_timer.setSingleShot(True)
         self.click_timer.timeout.connect(self.click_center)
-        self.click_timer.start(6000) 
-        
-        self.setCentralWidget(self.browser)
+        self.click_timer.start(10000) # Wait 10s for slow loads
+
+    def reboot_pi(self):
+        reply = QMessageBox.question(self, 'Reboot', "Restart FlightBox?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            os.system('sudo reboot')
 
     def click_center(self):
-        print("Performing auto-click to clear UI...")
-        # Calculate the middle of our 480x320 window
-        center_x = int(WINDOW_SIZE[0] / 2)
-        center_y = int(WINDOW_SIZE[1] / 2)
-        center_point = QPoint(center_x, center_y)
-        
-        # Simulate a left-click on the browser widget
+        center_point = QPoint(int(WINDOW_SIZE[0] / 2), int(WINDOW_SIZE[1] / 2))
         QTest.mouseClick(self.browser.focusProxy(), Qt.MouseButton.LeftButton, pos=center_point)
 
     def run_cleaner(self):
+        # JavaScript with SCROLL-TO-BOTTOM and CLICK logic
         script = f"""
             (function() {{
-                var buttons = document.querySelectorAll('button');
+                // 1. Find buttons that look like "Agree" or "Accept"
+                var buttons = document.querySelectorAll('button, a, span');
                 buttons.forEach(btn => {{
                     var text = btn.innerText.toUpperCase();
-                    if (text.includes('AGREE') || text.includes('CONSENT') || text.includes('ACCEPT')) {{
-                        var scrollable = btn.closest('div');
-                        if (scrollable) {{ scrollable.scrollTop = scrollable.scrollHeight; }}
+                    if (text.includes('AGREE') || text.includes('ACCEPT') || text.includes('CONSENT')) {{
+                        // Scroll the parent container to the bottom to "read" terms
+                        var scrollParent = btn.parentElement;
+                        while (scrollParent) {{
+                            scrollParent.scrollTop = scrollParent.scrollHeight;
+                            scrollParent = scrollParent.parentElement;
+                            if (scrollParent === document.body) break;
+                        }}
                         btn.click();
                     }}
                 }});
-                var trash = document.querySelectorAll('.fc-consent-root, .fc-dialog-container');
+
+                // 2. Remove the gray overlay roots
+                var trash = document.querySelectorAll('.fc-consent-root, .fc-dialog-container, #sp_message_container');
                 trash.forEach(el => el.remove());
 
+                // 3. Inject Kiosk CSS
                 var style = document.getElementById('kiosk-style');
                 if (!style) {{
                     style = document.createElement('style');
@@ -98,11 +130,14 @@ class RadarWindow(QMainWindow):
         """
         self.browser.page().runJavaScript(script)
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
+
 if __name__ == "__main__":
+    os.environ["QT_XCB_GL_INTEGRATION"] = "xcb_egl"
     app = QApplication(sys.argv)
+    app.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
     window = RadarWindow()
-    
-    # Use FullScreen for the Pi's LCD
-    window.showFullScreen() 
-    
+    window.show()
     sys.exit(app.exec())

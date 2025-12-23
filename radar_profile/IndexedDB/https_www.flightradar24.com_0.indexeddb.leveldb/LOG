@@ -1,16 +1,16 @@
-2025/12/22-18:28:30.578 4edc Reusing MANIFEST C:\Users\Moe\Documents\GitHub\FlightBox\radar_profile\IndexedDB\https_www.flightradar24.com_0.indexeddb.leveldb/MANIFEST-000001
-2025/12/22-18:28:30.583 4edc Recovering log #17
-2025/12/22-18:28:30.583 4edc Reusing old log C:\Users\Moe\Documents\GitHub\FlightBox\radar_profile\IndexedDB\https_www.flightradar24.com_0.indexeddb.leveldb/000017.log 
-2025/12/22-18:28:30.583 4edc Delete type=2 #14
-2025/12/22-18:28:30.583 4edc Delete type=2 #15
-2025/12/22-18:28:30.662 4edc Level-0 table #23: started
-2025/12/22-18:28:30.669 4edc Level-0 table #23: 1321 bytes OK
-2025/12/22-18:28:30.670 4edc Delete type=0 #17
-2025/12/22-18:28:30.670 9628 Manual compaction at level-0 from '\x00\x0b\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0c\x00\x00\x00' @ 0 : 0; will stop at '\x00\x0b\x00\x00\x05' @ 186990 : 1
-2025/12/22-18:28:30.671 9628 Compacting 1@0 + 2@1 files
-2025/12/22-18:28:30.709 9628 Generated table #24@0: 102926 keys, 2255620 bytes
-2025/12/22-18:28:30.717 9628 Generated table #25@0: 12277 keys, 389590 bytes
-2025/12/22-18:28:30.717 9628 Compacted 1@0 + 2@1 files => 2645210 bytes
-2025/12/22-18:28:30.717 9628 compacted to: files[ 0 2 1 0 0 0 0 ]
-2025/12/22-18:28:30.717 9628 Delete type=2 #23
-2025/12/22-18:28:30.718 9628 Manual compaction at level-0 from '\x00\x0b\x00\x00\x05' @ 186990 : 1 .. '\x00\x0c\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/12/22-18:49:13.681 2f2e Reusing MANIFEST /home/cedarace/GitHub/FlightBox/radar_profile/IndexedDB/https_www.flightradar24.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/12/22-18:49:13.682 2f2e Recovering log #55
+2025/12/22-18:49:13.682 2f2e Reusing old log /home/cedarace/GitHub/FlightBox/radar_profile/IndexedDB/https_www.flightradar24.com_0.indexeddb.leveldb/000055.log 
+2025/12/22-18:49:13.682 2f2e Delete type=2 #52
+2025/12/22-18:49:13.682 2f2e Delete type=2 #53
+2025/12/22-18:49:14.427 2f2b Level-0 table #61: started
+2025/12/22-18:49:14.434 2f2b Level-0 table #61: 1190 bytes OK
+2025/12/22-18:49:14.438 2f2b Delete type=0 #55
+2025/12/22-18:49:14.440 2f2b Manual compaction at level-0 from '\x00\x13\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x14\x00\x00\x00' @ 0 : 0; will stop at '\x00\x13\x00\x00\x05' @ 187250 : 1
+2025/12/22-18:49:14.440 2f2b Compacting 1@0 + 2@1 files
+2025/12/22-18:49:14.555 2f2b Generated table #62@0: 102951 keys, 2255851 bytes
+2025/12/22-18:49:14.577 2f2b Generated table #63@0: 12277 keys, 389590 bytes
+2025/12/22-18:49:14.578 2f2b Compacted 1@0 + 2@1 files => 2645441 bytes
+2025/12/22-18:49:14.588 2f2b compacted to: files[ 0 2 1 0 0 0 0 ]
+2025/12/22-18:49:14.589 2f2b Delete type=2 #61
+2025/12/22-18:49:14.590 2f2b Manual compaction at level-0 from '\x00\x13\x00\x00\x05' @ 187250 : 1 .. '\x00\x14\x00\x00\x00' @ 0 : 0; will stop at (end)
